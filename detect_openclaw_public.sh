@@ -12,7 +12,7 @@
 # THIS SCRIPT MAKES NO CHANGES TO THE SYSTEM.
 #
 # UPDATES:
-#   - LOG_DIR must be configured before use (line 23)
+#   - LOG_DIR must be configured before use (line 27)
 #   - Enhanced brew detection with fallback to 'which brew' for non-standard paths
 #   - Homebrew auto-updates suppressed during script execution
 ###############################################################################
@@ -627,7 +627,9 @@ else
     log "RESULT: Detected $TOTAL_FOUND OpenClaw/ClawdBot/MoltBot component(s)."
     log "Review the log at $LOG_FILE for details."
     log ""
-    log "Running the uninstall policy..."
-    jamf policy -event uninstall_openclaw
+    log "To remove these components, run the uninstall script."
+    # Optionally call jamf policy directly if anything detected
+    # log "Running the uninstall policy..."
+    # jamf policy -event uninstall_openclaw
     exit 0
 fi
