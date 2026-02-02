@@ -31,7 +31,7 @@ Complete removal script that stops services, uninstalls packages, and cleans up 
 
 **Before running either script**, you must configure the log directory:
 
-Edit line 27 in both scripts and set your desired log location:
+Edit line 28 in both scripts and set your desired log location:
 
 ```bash
 LOG_DIR="SET_YOUR_LOG_LOCATION_HERE"  # e.g., /var/log/openclaw_detection
