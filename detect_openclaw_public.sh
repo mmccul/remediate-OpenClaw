@@ -362,11 +362,26 @@ detect_packages_native() {
     # Check pnpm
     if [[ -n "$pnpm_path" ]]; then
         log "Found pnpm at $pnpm_path for user $user"
-        for pkg in "${NPM_PACKAGES[@]}"; do
-            if sudo -u "$user" "$pnpm_path" list -g "$pkg" &>/dev/null; then
-                log_found "pnpm global package: $pkg (user: $user)"
-            fi
-        done
+        # NOTE: `pnpm list -g <pkg>` may return exit code 0 even when <pkg> is NOT installed,
+        # which can create false positives if we only check the exit status.
+        # Prefer checking the global root directory and confirming the package path exists.
+        pnpm_global_root="$(sudo -u "$user" "$pnpm_path" root -g 2>/dev/null | tr -d '\r' || true)"
+        if [[ -n "$pnpm_global_root" ]]; then
+            log "pnpm global root for user $user: $pnpm_global_root"
+            for pkg in "${NPM_PACKAGES[@]}"; do
+                if [[ -e "$pnpm_global_root/$pkg" || -L "$pnpm_global_root/$pkg" ]]; then
+                    log_found "pnpm global package: $pkg (user: $user)"
+                fi
+            done
+        else
+            # Fallback: parse output for an actual "<name>@<version>" occurrence.
+            for pkg in "${NPM_PACKAGES[@]}"; do
+                pnpm_out="$(sudo -u "$user" "$pnpm_path" list -g --depth 0 "$pkg" 2>/dev/null || true)"
+                if echo "$pnpm_out" | grep -Eiq "(^|[[:space:]])${pkg}@"; then
+                    log_found "pnpm global package: $pkg (user: $user)"
+                fi
+            done
+        fi
     fi
     
     # Check bun
