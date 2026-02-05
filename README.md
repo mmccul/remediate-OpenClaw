@@ -12,6 +12,9 @@ Read-only detection script that scans for all traces of OpenClaw/ClawdBot/MoltBo
 ### `uninstall_openclaw_public.sh`
 Complete removal script that stops services, uninstalls packages, and cleans up all configuration files and directories.
 
+### `openclaw_detection_log_EA.sh`
+Optional Extention Attribute for Jamf Pro. Looks at the last few lines of the log file to determine if anything was found.
+
 ## Features
 
 - **Comprehensive Detection**: Scans for applications, LaunchAgents/LaunchDaemons, npm/pnpm/bun packages, Homebrew formulas, configuration directories, and more
