@@ -219,7 +219,7 @@ for i in "${!LOCAL_USERNAMES[@]}"; do
             if [[ "$loaded_label" == *"$pattern"* ]]; then
                 log_found "Loaded LaunchAgent matching '$pattern': $loaded_label for user $username"
             fi
-        done < <(launchctl print "gui/$uid" | grep -i "$pattern" | awk '{print $NF}')
+        done < <(launchctl print "gui/$uid" 2>/dev/null | grep -i "$pattern" | awk '{print $NF}')
     done
 done
 
