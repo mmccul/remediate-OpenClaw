@@ -12,6 +12,9 @@ Read-only detection script that scans for all traces of OpenClaw/ClawdBot/MoltBo
 ### `uninstall_openclaw_public.sh`
 Complete removal script that stops services, uninstalls packages, and cleans up all configuration files and directories.
 
+### `detect_openclaw_falsepositives_public.sh`
+Read-only detection script that scans detection and uninstall logs determining if detections/uninstallations were genuine. Usefull if you ran previous versions of detect_openclaw_public.sh and uninstall_openclaw_public.sh prior to pnpm and npm detection fixes.
+
 ### `openclaw_detection_log_EA.sh`
 Optional Extention Attribute for Jamf Pro. Looks at the last few lines of the log file to determine if anything was found.
 
@@ -34,7 +37,7 @@ Optional Extention Attribute for Jamf Pro. Looks at the last few lines of the lo
 
 **Before running either script**, you must configure the log directory:
 
-Edit line 28 in both scripts and set your desired log location:
+Edit LOG_DIR variable in detect_openclaw_public.sh, detect_openclaw_falsepositives_public.sh, and uninstall_openclaw_public.sh scripts to set your desired log location:
 
 ```bash
 LOG_DIR="SET_YOUR_LOG_LOCATION_HERE"  # e.g., /var/log/openclaw_detection
