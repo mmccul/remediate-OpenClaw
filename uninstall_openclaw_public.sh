@@ -464,31 +464,70 @@ uninstall_packages_native() {
     # Uninstall via npm
     if [[ -n "$npm_path" ]]; then
         log "Found npm at $npm_path for user $user"
-        for pkg in "${NPM_PACKAGES[@]}"; do
-            if sudo -u "$user" "$npm_path" list -g "$pkg" &>/dev/null; then
-                log "Uninstalling $pkg via npm for $user"
-                sudo -u "$user" "$npm_path" rm -g "$pkg"
-            fi
-        done
+        # Use the same robust check as detection: verify package directory actually exists
+        npm_global_root="$(sudo -u "$user" "$npm_path" root -g 2>/dev/null | tr -d '\r' || true)"
+        if [[ -n "$npm_global_root" ]]; then
+            for pkg in "${NPM_PACKAGES[@]}"; do
+                if [[ -e "$npm_global_root/$pkg" || -L "$npm_global_root/$pkg" ]]; then
+                    log "Uninstalling $pkg via npm for $user"
+                    sudo -u "$user" "$npm_path" rm -g "$pkg" 2>&1 | tee -a "$LOG_FILE"
+                else
+                    log "Package $pkg not found in npm global root for $user (skipping)"
+                fi
+            done
+        else
+            # Fallback: parse list output to verify package is actually installed
+            for pkg in "${NPM_PACKAGES[@]}"; do
+                npm_out="$(sudo -u "$user" "$npm_path" list -g --depth 0 "$pkg" 2>/dev/null || true)"
+                if echo "$npm_out" | grep -Eiq "(^|[[:space:]])${pkg}@"; then
+                    log "Uninstalling $pkg via npm for $user"
+                    sudo -u "$user" "$npm_path" rm -g "$pkg" 2>&1 | tee -a "$LOG_FILE"
+                else
+                    log "Package $pkg not actually installed for $user (skipping)"
+                fi
+            done
+        fi
     fi
     
     # Uninstall via pnpm
     if [[ -n "$pnpm_path" ]]; then
         log "Found pnpm at $pnpm_path for user $user"
-        for pkg in "${NPM_PACKAGES[@]}"; do
-            if sudo -u "$user" "$pnpm_path" list -g "$pkg" &>/dev/null; then
-                log "Uninstalling $pkg via pnpm for $user"
-                sudo -u "$user" "$pnpm_path" remove -g "$pkg"
-            fi
-        done
+        # Use the same robust check as detection: verify package directory actually exists
+        pnpm_global_root="$(sudo -u "$user" "$pnpm_path" root -g 2>/dev/null | tr -d '\r' || true)"
+        if [[ -n "$pnpm_global_root" ]]; then
+            for pkg in "${NPM_PACKAGES[@]}"; do
+                if [[ -e "$pnpm_global_root/$pkg" || -L "$pnpm_global_root/$pkg" ]]; then
+                    log "Uninstalling $pkg via pnpm for $user"
+                    sudo -u "$user" "$pnpm_path" remove -g "$pkg" 2>&1 | tee -a "$LOG_FILE"
+                else
+                    log "Package $pkg not found in pnpm global root for $user (skipping)"
+                fi
+            done
+        else
+            # Fallback: parse list output to verify package is actually installed
+            for pkg in "${NPM_PACKAGES[@]}"; do
+                pnpm_out="$(sudo -u "$user" "$pnpm_path" list -g --depth 0 "$pkg" 2>/dev/null || true)"
+                if echo "$pnpm_out" | grep -Eiq "(^|[[:space:]])${pkg}@"; then
+                    log "Uninstalling $pkg via pnpm for $user"
+                    sudo -u "$user" "$pnpm_path" remove -g "$pkg" 2>&1 | tee -a "$LOG_FILE"
+                else
+                    log "Package $pkg not actually installed for $user (skipping)"
+                fi
+            done
+        fi
     fi
     
     # Uninstall via bun
     if [[ -n "$bun_path" ]]; then
         log "Found bun at $bun_path for user $user"
         for pkg in "${NPM_PACKAGES[@]}"; do
-            log "Attempting to uninstall $pkg via bun for $user"
-            sudo -u "$user" "$bun_path" remove -g "$pkg"
+            # Check if package is actually installed before attempting removal
+            if sudo -u "$user" "$bun_path" pm ls -g 2>/dev/null | grep -q "$pkg"; then
+                log "Uninstalling $pkg via bun for $user"
+                sudo -u "$user" "$bun_path" remove -g "$pkg" 2>&1 | tee -a "$LOG_FILE"
+            else
+                log "Package $pkg not found in bun global packages for $user (skipping)"
+            fi
         done
     fi
 }
